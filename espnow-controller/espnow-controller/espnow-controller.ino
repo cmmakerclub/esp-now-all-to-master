@@ -7,11 +7,7 @@ extern "C" {
 
 #define WIFI_DEFAULT_CHANNEL 1
 
-
-// neo = {0x1A,0xFE,0x34,0xEE,0xCA,0xED}
-uint8_t neo_slave[] = {0x1A,0xFE,0x34,0xEE,0xCA,0xED};
-uint8_t bare_up_slave[] = {0x5E,0xCF,0x7F,0x9,0x98,0x4E};
-uint8_t bare_no_up_nodht[] = {0x1A,0xFE,0x34,0xDA,0xEA,0xD0};
+uint8_t slave[] = {0x1A,0xFE,0x34,0xDB,0x3D,0x22};
 
 
 void printMacAddress(uint8_t* macaddr) {
@@ -51,7 +47,6 @@ void setup() {
   esp_now_set_self_role(ESP_NOW_ROLE_CONTROLLER);
   esp_now_register_recv_cb([](uint8_t *macaddr, uint8_t *data, uint8_t len) {
     Serial.println("recv_cb");
-
     Serial.print("mac address: ");
     printMacAddress(macaddr);
 
@@ -64,16 +59,16 @@ void setup() {
 
   esp_now_register_send_cb([](uint8_t* macaddr, uint8_t status) {
     Serial.println("send_cb");
-
     Serial.print("mac address: ");
     printMacAddress(macaddr);
 
     Serial.print("status = "); Serial.println(status);
   });
 
-  int res = esp_now_add_peer(neo_slave, (uint8_t)ESP_NOW_ROLE_SLAVE,(uint8_t)WIFI_DEFAULT_CHANNEL, NULL, 0);
-  res = esp_now_add_peer(bare_up_slave, (uint8_t)ESP_NOW_ROLE_SLAVE,(uint8_t)WIFI_DEFAULT_CHANNEL, NULL, 0);
-  res = esp_now_add_peer(bare_no_up_nodht, (uint8_t)ESP_NOW_ROLE_SLAVE,(uint8_t)WIFI_DEFAULT_CHANNEL, NULL, 0);
+  int res = esp_now_add_peer(slave, (uint8_t)ESP_NOW_ROLE_SLAVE,(uint8_t)WIFI_DEFAULT_CHANNEL, NULL, 0);
+  Serial.printf("Add slave result: %d \r\n", res);
+  // res = esp_now_add_peer(bare_up_slave, (uint8_t)ESP_NOW_ROLE_SLAVE,(uint8_t)WIFI_DEFAULT_CHANNEL, NULL, 0);
+  // res = esp_now_add_peer(bare_no_up_nodht, (uint8_t)ESP_NOW_ROLE_SLAVE,(uint8_t)WIFI_DEFAULT_CHANNEL, NULL, 0);
 
   // ESP.deepSleep(2.5e6, WAKE_RF_DEFAULT);
 
@@ -81,15 +76,13 @@ void setup() {
 //  esp_now_deinit();
 }
 
-bool b=true;
-uint8_t message[] = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x08 };
 void loop() {
-  message[0] = b;
-  b=!b;
-  // esp_now_send(neo_slave, message, sizeof(message));
-  // esp_now_send(bare_up_slave, message, sizeof(message));
-  esp_now_send(NULL, message, 1);
-  digitalWrite(LED_BUILTIN, b);
-  delay(100);
+  yield();
+  // message[0] = b;
+  // b=!b;
+  // // esp_now_send(neo_slave, message, sizeof(message));
+  // // esp_now_send(bare_up_slave, message, sizeof(message));
+  // esp_now_send(NULL, message, 1);
+  // digitalWrite(LED_BUILTIN, b);
+  // delay(100);
 }
-

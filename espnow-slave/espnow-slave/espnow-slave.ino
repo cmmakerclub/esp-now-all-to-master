@@ -5,9 +5,9 @@ extern "C" {
   #include <user_interface.h>
 }
 
-#define WIFI_DEFAULT_CHANNEL 9
-// {0x18,0xFE,0x34,0xEE,0xCA,0xED} = bare
-uint8_t mac[] = {0x18,0xFE,0x34,0xEE,0xCA,0xED};
+#define WIFI_DEFAULT_CHANNEL 1
+uint8_t master_mac[] = {0x5C,0xCF,0x7F,0x9,0xDA,0xD2};
+
 
 void printMacAddress(uint8_t* macaddr) {
   Serial.print("{");
@@ -53,7 +53,6 @@ void setup() {
 
     Serial.print("mac address: ");
     printMacAddress(macaddr);
-
     Serial.print("data: ");
     for (int i = 0; i < len; i++) {
       Serial.print(" 0x");
@@ -62,22 +61,24 @@ void setup() {
     Serial.println("");
     digitalWrite(LED_BUILTIN, data[0]);
   });
+
   esp_now_register_send_cb([](uint8_t* macaddr, uint8_t status) {
-    Serial.println("send_cb");
-
-    Serial.print("mac address: ");
+    Serial.print("send to mac addr: ");
     printMacAddress(macaddr);
-
-    Serial.print("status = "); Serial.println(status);
+    Serial.println(String("status = ") + status);
   });
 
-  int res = esp_now_add_peer(mac, (uint8_t)ESP_NOW_ROLE_CONTROLLER,(uint8_t)WIFI_DEFAULT_CHANNEL, NULL, 0);
-
+  int res = esp_now_add_peer(master_mac, (uint8_t)ESP_NOW_ROLE_CONTROLLER,(uint8_t)WIFI_DEFAULT_CHANNEL, NULL, 0);
+  Serial.printf("ADD PEER SLAVE RESULT = %d\r\n", res);
 //  esp_now_unregister_recv_cb();
 //  esp_now_deinit();
 }
 
+uint8_t message[] = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x08 };
 void loop() {
-  yield();
+  if (millis() % 1000 == 0) {
+    Serial.printf("[%lu] sending...\r\n", millis());
+    esp_now_send(master_mac, message, 7);
+    delay(1);
+  }
 }
-
