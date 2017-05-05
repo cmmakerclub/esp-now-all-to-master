@@ -6,6 +6,7 @@ extern "C" {
 }
 
 #define WIFI_DEFAULT_CHANNEL 1
+// USE STATION_IF
 uint8_t master_mac[] = {0x5C,0xCF,0x7F,0x9,0xDA,0xD2};
 
 
@@ -31,11 +32,11 @@ void setup() {
 
   uint8_t macaddr[6];
   wifi_get_macaddr(STATION_IF, macaddr);
-  Serial.print("mac address (STATION_IF): ");
+  Serial.print("[master] mac address (STATION_IF): ");
   printMacAddress(macaddr);
 
   wifi_get_macaddr(SOFTAP_IF, macaddr);
-  Serial.print("mac address (SOFTAP_IF): ");
+  Serial.print("[slave] mac address (SOFTAP_IF): ");
   printMacAddress(macaddr);
 
   if (esp_now_init() == 0) {
@@ -68,8 +69,8 @@ void setup() {
     Serial.println(String("status = ") + status);
   });
 
-  int res = esp_now_add_peer(master_mac, (uint8_t)ESP_NOW_ROLE_CONTROLLER,(uint8_t)WIFI_DEFAULT_CHANNEL, NULL, 0);
-  Serial.printf("ADD PEER SLAVE RESULT = %d\r\n", res);
+  // int res = esp_now_add_peer(master_mac, (uint8_t)ESP_NOW_ROLE_CONTROLLER,(uint8_t)WIFI_DEFAULT_CHANNEL, NULL, 0);
+  // Serial.printf("ADD PEER SLAVE RESULT = %d\r\n", res);
 //  esp_now_unregister_recv_cb();
 //  esp_now_deinit();
 }

@@ -7,9 +7,8 @@ extern "C" {
 
 #define WIFI_DEFAULT_CHANNEL 1
 
+// SOFTAP_IF
 uint8_t slave[] = {0x1A,0xFE,0x34,0xDB,0x3D,0x22};
-
-
 void printMacAddress(uint8_t* macaddr) {
   Serial.print("{");
   for (int i = 0; i < 6; i++) {
@@ -29,11 +28,11 @@ void setup() {
 
   uint8_t macaddr[6];
   wifi_get_macaddr(STATION_IF, macaddr);
-  Serial.print("mac address (STATION_IF): ");
+  Serial.print("[master] address (STATION_IF): ");
   printMacAddress(macaddr);
 
   wifi_get_macaddr(SOFTAP_IF, macaddr);
-  Serial.print("mac address (SOFTAP_IF): ");
+  Serial.print("[slave] address (SOFTAP_IF): ");
   printMacAddress(macaddr);
 
   if (esp_now_init()==0) {
@@ -46,11 +45,10 @@ void setup() {
 
   esp_now_set_self_role(ESP_NOW_ROLE_CONTROLLER);
   esp_now_register_recv_cb([](uint8_t *macaddr, uint8_t *data, uint8_t len) {
-    Serial.println("recv_cb");
-    Serial.print("mac address: ");
+    Serial.print("recv_cb from: ");
     printMacAddress(macaddr);
 
-    Serial.print("data: ");
+    Serial.print("[HEX] data: ");
     for (int i = 0; i < len; i++) {
       Serial.print(data[i], HEX);
     }
@@ -58,11 +56,14 @@ void setup() {
   });
 
   esp_now_register_send_cb([](uint8_t* macaddr, uint8_t status) {
-    Serial.println("send_cb");
-    Serial.print("mac address: ");
+    Serial.print("send_cb to ");
     printMacAddress(macaddr);
-
-    Serial.print("status = "); Serial.println(status);
+    if (status == 0) {
+      Serial.print("ESPNOW: SEND_FAILED");
+    }
+    else {
+      Serial.print("ESPNOW: SEND_OK");
+    }
   });
 
   int res = esp_now_add_peer(slave, (uint8_t)ESP_NOW_ROLE_SLAVE,(uint8_t)WIFI_DEFAULT_CHANNEL, NULL, 0);
