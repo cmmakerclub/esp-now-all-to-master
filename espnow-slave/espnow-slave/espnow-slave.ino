@@ -7,8 +7,10 @@ extern "C" {
 
 #define WIFI_DEFAULT_CHANNEL 1
 // USE STATION_IF
-uint8_t master_mac[] = {0x5C,0xCF,0x7F,0x9,0xDA,0xD2};
-
+uint8_t master_mac[] = {0x18,0xFE,0x34,0xEE,0xA0,0xF9};
+uint32_t counter = 0;
+uint32_t send_ok_counter = 0;
+uint32_t send_fail_counter = 0;
 
 void printMacAddress(uint8_t* macaddr) {
   Serial.print("{");
@@ -51,7 +53,6 @@ void setup() {
   esp_now_set_self_role(ESP_NOW_ROLE_SLAVE);
   esp_now_register_recv_cb([](uint8_t *macaddr, uint8_t *data, uint8_t len) {
     Serial.println("recv_cb");
-
     Serial.print("mac address: ");
     printMacAddress(macaddr);
     Serial.print("data: ");
@@ -62,11 +63,20 @@ void setup() {
     Serial.println("");
     digitalWrite(LED_BUILTIN, data[0]);
   });
-
   esp_now_register_send_cb([](uint8_t* macaddr, uint8_t status) {
     Serial.print("send to mac addr: ");
     printMacAddress(macaddr);
-    Serial.println(String("status = ") + status);
+    if (status == 0) {
+      send_ok_counter++;
+      counter++;
+      Serial.printf("... send_cb OK. [%lu/%lu]\r\n",
+                    send_ok_counter, send_fail_counter);
+    }
+    else {
+      send_fail_counter++;
+      Serial.printf("... send_cb FAILED. [%lu/%lu]\r\n",
+                    send_ok_counter, send_fail_counter);
+    }
   });
 
   // int res = esp_now_add_peer(master_mac, (uint8_t)ESP_NOW_ROLE_CONTROLLER,(uint8_t)WIFI_DEFAULT_CHANNEL, NULL, 0);
@@ -75,11 +85,16 @@ void setup() {
 //  esp_now_deinit();
 }
 
-uint8_t message[] = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x08 };
+uint8_t message[] = {0};
 void loop() {
   if (millis() % 1000 == 0) {
     Serial.printf("[%lu] sending...\r\n", millis());
-    esp_now_send(master_mac, message, 7);
+    message[0] = (counter >> 24) & 0xFF;
+    message[1] = (counter >> 16) & 0xFF;
+    message[2] = (counter >> 8) & 0xFF;
+    message[3] =  counter & 0xFF;
+    Serial.printf("Counter = %lu \r\n", counter);
+    esp_now_send(master_mac, message, 4);
     delay(1);
   }
 }

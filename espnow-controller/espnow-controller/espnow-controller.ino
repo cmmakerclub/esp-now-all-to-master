@@ -8,7 +8,6 @@ extern "C" {
 #define WIFI_DEFAULT_CHANNEL 1
 
 // SOFTAP_IF
-uint8_t slave[] = {0x1A,0xFE,0x34,0xDB,0x3D,0x22};
 void printMacAddress(uint8_t* macaddr) {
   Serial.print("{");
   for (int i = 0; i < 6; i++) {
@@ -47,12 +46,14 @@ void setup() {
   esp_now_register_recv_cb([](uint8_t *macaddr, uint8_t *data, uint8_t len) {
     Serial.print("recv_cb from: ");
     printMacAddress(macaddr);
+    uint32_t bigNum;
+    bigNum = (bigNum << 8) | data[0];
+    bigNum = (bigNum << 8) | data[1];
+    bigNum = (bigNum << 8) | data[2];
+    bigNum = (bigNum << 8) | data[3];
 
-    Serial.print("[HEX] data: ");
-    for (int i = 0; i < len; i++) {
-      Serial.print(data[i], HEX);
-    }
-    Serial.println("");
+    Serial.print("value: ");
+    Serial.println(bigNum);
   });
 
   esp_now_register_send_cb([](uint8_t* macaddr, uint8_t status) {
@@ -65,25 +66,9 @@ void setup() {
       Serial.print("ESPNOW: SEND_OK");
     }
   });
-
-  int res = esp_now_add_peer(slave, (uint8_t)ESP_NOW_ROLE_SLAVE,(uint8_t)WIFI_DEFAULT_CHANNEL, NULL, 0);
-  Serial.printf("Add slave result: %d \r\n", res);
-  // res = esp_now_add_peer(bare_up_slave, (uint8_t)ESP_NOW_ROLE_SLAVE,(uint8_t)WIFI_DEFAULT_CHANNEL, NULL, 0);
-  // res = esp_now_add_peer(bare_no_up_nodht, (uint8_t)ESP_NOW_ROLE_SLAVE,(uint8_t)WIFI_DEFAULT_CHANNEL, NULL, 0);
-
-  // ESP.deepSleep(2.5e6, WAKE_RF_DEFAULT);
-
-//  esp_now_unregister_recv_cb();
-//  esp_now_deinit();
 }
 
 void loop() {
   yield();
-  // message[0] = b;
-  // b=!b;
-  // // esp_now_send(neo_slave, message, sizeof(message));
-  // // esp_now_send(bare_up_slave, message, sizeof(message));
-  // esp_now_send(NULL, message, 1);
-  // digitalWrite(LED_BUILTIN, b);
   // delay(100);
 }
