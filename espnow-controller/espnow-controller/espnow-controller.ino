@@ -24,7 +24,6 @@ void setup() {
   Serial.begin(115200);
   Serial.println("Initializing...");
   WiFi.mode(WIFI_STA);
-
   uint8_t macaddr[6];
   wifi_get_macaddr(STATION_IF, macaddr);
   Serial.print("[master] address (STATION_IF): ");

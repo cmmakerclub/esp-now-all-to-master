@@ -4,8 +4,8 @@ extern "C" {
   #include <espnow.h>
   #include <user_interface.h>
 }
-
 #define WIFI_DEFAULT_CHANNEL 1
+
 // USE STATION_IF
 uint8_t master_mac[] = {0x18,0xFE,0x34,0xEE,0xA0,0xF9};
 uint32_t counter = 0;
@@ -78,11 +78,6 @@ void setup() {
                     send_ok_counter, send_fail_counter);
     }
   });
-
-  // int res = esp_now_add_peer(master_mac, (uint8_t)ESP_NOW_ROLE_CONTROLLER,(uint8_t)WIFI_DEFAULT_CHANNEL, NULL, 0);
-  // Serial.printf("ADD PEER SLAVE RESULT = %d\r\n", res);
-//  esp_now_unregister_recv_cb();
-//  esp_now_deinit();
 }
 
 uint8_t message[] = {0};
