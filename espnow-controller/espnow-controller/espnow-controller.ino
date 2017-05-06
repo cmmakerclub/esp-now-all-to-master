@@ -6,7 +6,7 @@ extern "C" {
 }
 
 #define WIFI_DEFAULT_CHANNEL 1
-#define DEBUG_SERIAL 0
+#define DEBUG_SERIAL 1
 
 #if DEBUG_SERIAL
     #define DEBUG_PRINTER Serial
