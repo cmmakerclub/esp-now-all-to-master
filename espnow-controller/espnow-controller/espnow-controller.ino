@@ -6,6 +6,16 @@ extern "C" {
 }
 
 #define WIFI_DEFAULT_CHANNEL 1
+#define DEBUG_SERIAL 0
+
+#ifdef DEBUG_SERIAL
+    #define DEBUG_PRINTER Serial
+    #define DEBUG_PRINT(...) { DEBUG_PRINTER.print(__VA_ARGS__); }
+    #define DEBUG_PRINTLN(...) { DEBUG_PRINTER.println(__VA_ARGS__); }
+#else
+    #define DEBUG_PRINT(...) { }
+    #define DEBUG_PRINTLN(...) { }
+#endif
 
 // SOFTAP_IF
 void printMacAddress(uint8_t* macaddr) {
@@ -15,7 +25,7 @@ void printMacAddress(uint8_t* macaddr) {
     Serial.print(macaddr[i], HEX);
     if (i < 5) Serial.print(',');
   }
-  Serial.println("}");
+  Serial.println("};");
 }
 
 void setup() {
@@ -43,8 +53,6 @@ void setup() {
 
   esp_now_set_self_role(ESP_NOW_ROLE_CONTROLLER);
   esp_now_register_recv_cb([](uint8_t *macaddr, uint8_t *data, uint8_t len) {
-    Serial.print("recv_cb from: ");
-    printMacAddress(macaddr);
     uint32_t bigNum;
     bigNum = (bigNum << 8) | data[0];
     bigNum = (bigNum << 8) | data[1];
@@ -52,7 +60,9 @@ void setup() {
     bigNum = (bigNum << 8) | data[3];
 
     Serial.print("value: ");
-    Serial.println(bigNum);
+    Serial.print(bigNum);
+    Serial.print(" recv_cb from: ");
+    printMacAddress(macaddr);
   });
 
   esp_now_register_send_cb([](uint8_t* macaddr, uint8_t status) {
