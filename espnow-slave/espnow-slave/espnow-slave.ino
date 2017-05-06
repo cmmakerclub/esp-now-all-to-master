@@ -4,16 +4,24 @@ extern "C" {
   #include <espnow.h>
   #include <user_interface.h>
 }
-#define WIFI_DEFAULT_CHANNEL 1
-#define DEBUG_SERIAL 0
 
-#ifdef DEBUG_SERIAL
+#include <Ticker.h>
+
+Ticker ticker;
+
+#define WIFI_DEFAULT_CHANNEL 1
+#define DEBUG_SERIAL 1
+bool must_send_data = 0;
+
+#if DEBUG_SERIAL
     #define DEBUG_PRINTER Serial
     #define DEBUG_PRINT(...) { DEBUG_PRINTER.print(__VA_ARGS__); }
     #define DEBUG_PRINTLN(...) { DEBUG_PRINTER.println(__VA_ARGS__); }
+    #define DEBUG_PRINTF(...) { DEBUG_PRINTER.printf(__VA_ARGS__); }
 #else
     #define DEBUG_PRINT(...) { }
     #define DEBUG_PRINTLN(...) { }
+    #define DEBUG_PRINTF(...) { }
 #endif
 
 // USE STATION_IF
@@ -38,9 +46,7 @@ void setup() {
 
   Serial.begin(115200);
   DEBUG_PRINTLN("Initializing... SLAVE");
-
   WiFi.mode(WIFI_AP_STA);
-//  WiFi.softAP("foobar", "12345678", 1, 0);
 
   uint8_t macaddr[6];
   wifi_get_macaddr(STATION_IF, macaddr);
@@ -75,24 +81,30 @@ void setup() {
   });
 
   esp_now_register_send_cb([](uint8_t* macaddr, uint8_t status) {
+    DEBUG_PRINT(millis());
     DEBUG_PRINT("send to mac addr: ");
     printMacAddress(macaddr);
     if (status == 0) {
       send_ok_counter++;
       counter++;
-      // DEBUG_PRINTf("... send_cb OK. [%lu/%lu]\r\n", send_ok_counter, send_fail_counter);
+      DEBUG_PRINTF("... send_cb OK. [%lu/%lu]\r\n", send_ok_counter, send_ok_counter + send_fail_counter);
       digitalWrite(LED_BUILTIN, HIGH);
     }
     else {
       send_fail_counter++;
-      // DEBUG_PRINTf("... send_cb FAILED. [%lu/%lu]\r\n", send_ok_counter, send_fail_counter);
+      DEBUG_PRINTF("... send_cb FAILED. [%lu/%lu]\r\n", send_ok_counter, send_ok_counter + send_fail_counter);
     }
+  });
+
+  ticker.attach_ms(500, [&]() {
+    must_send_data = 1;
   });
 }
 
 uint8_t message[] = {0};
 void loop() {
-  if (millis() % 100 == 0) {
+  if (must_send_data) {
+    must_send_data = 0;
     // DEBUG_PRINTf("[%lu] sending...\r\n", millis());
     message[0] = (counter >> 24) & 0xFF;
     message[1] = (counter >> 16) & 0xFF;
@@ -100,7 +112,7 @@ void loop() {
     message[3] =  counter & 0xFF;
     // DEBUG_PRINTf("Counter = %lu \r\n", counter);
     digitalWrite(LED_BUILTIN, LOW);
+    DEBUG_PRINTLN(millis());
     esp_now_send(master_mac, message, 4);
-    delay(1);
   }
 }
