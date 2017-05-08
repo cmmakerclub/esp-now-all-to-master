@@ -7,7 +7,6 @@ extern "C" {
 
 #define WIFI_DEFAULT_CHANNEL 1
 #define DEBUG_SERIAL 1
-
 #if DEBUG_SERIAL
     #define DEBUG_PRINTER Serial
     #define DEBUG_PRINT(...) { DEBUG_PRINTER.print(__VA_ARGS__); }
@@ -77,10 +76,10 @@ void setup() {
     DEBUG_PRINT("send_cb to ");
     printMacAddress(macaddr);
     if (status == 0) {
-      DEBUG_PRINT("ESPNOW: SEND_FAILED");
+      DEBUG_PRINT("ESPNOW: SEND_OK");
     }
     else {
-      DEBUG_PRINT("ESPNOW: SEND_OK");
+      DEBUG_PRINT("ESPNOW: SEND_FAILED");
     }
   });
 }

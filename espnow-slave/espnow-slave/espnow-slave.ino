@@ -6,7 +6,6 @@ extern "C" {
 }
 
 #include <Ticker.h>
-
 Ticker ticker;
 
 #define WIFI_DEFAULT_CHANNEL 1
