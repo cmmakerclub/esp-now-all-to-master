@@ -24,7 +24,7 @@ bool must_send_data = 0;
 #endif
 
 // USE STATION_IF
-uint8_t master_mac[] = {0x18,0xFE,0x34,0xEE,0x4A,0x42};
+uint8_t master_mac[] = {0x18,0xFE,0x34,0xEE,0xCD,0x21};
 uint32_t counter = 0;
 uint32_t send_ok_counter = 0;
 uint32_t send_fail_counter = 0;

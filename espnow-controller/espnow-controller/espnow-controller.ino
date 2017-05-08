@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
+#include <Ticker.h>
 extern "C" {
   #include <espnow.h>
   #include <user_interface.h>
@@ -19,6 +20,9 @@ extern "C" {
 #endif
 
 bool ledState = LOW;
+Ticker ticker;
+bool tickerFlag = 0;
+uint8_t slave_mac[] = {0x1A,0xFE,0x34,0xEE,0x6E,0x79};
 
 // SOFTAP_IF
 void printMacAddress(uint8_t* macaddr) {
@@ -56,6 +60,10 @@ void setup() {
     return;
   }
 
+  ticker.attach_ms(1500, [&]() {
+    tickerFlag = 1;
+  });
+
   esp_now_set_self_role(ESP_NOW_ROLE_CONTROLLER);
   esp_now_register_recv_cb([](uint8_t *macaddr, uint8_t *data, uint8_t len) {
     uint32_t bigNum;
@@ -82,9 +90,20 @@ void setup() {
       DEBUG_PRINT("ESPNOW: SEND_FAILED");
     }
   });
+
+  // int add_peer_status = esp_now_add_peer(slave_mac, ESP_NOW_ROLE_SLAVE, WIFI_DEFAULT_CHANNEL, NULL, 0);
+  // DEBUG_PRINTF("ADD PEER: %d\r\n", add_peer_status);
 }
 
 void loop() {
   yield();
+  if (tickerFlag==1) {
+    tickerFlag = 0;
+    int peer_exists = esp_now_is_peer_exist(slave_mac);
+    DEBUG_PRINTF("PEER EXISTS?: %d\r\n", peer_exists);
+    // uint8_t *peers =  esp_now_fetch_peer(true);
+    // DEBUG_PRINTF("1ST PEER =  %d\r\n", peers);
+    // printMacAddress(peers);
+  }
   // delay(100);
 }
