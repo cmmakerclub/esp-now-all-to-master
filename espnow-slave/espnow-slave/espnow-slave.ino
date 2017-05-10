@@ -105,11 +105,10 @@ void loop() {
   if (must_send_data) {
     must_send_data = 0;
     // DEBUG_PRINTf("[%lu] sending...\r\n", millis());
-    message[0] = (counter >> 24) & 0xFF;
-    message[1] = (counter >> 16) & 0xFF;
-    message[2] = (counter >> 8) & 0xFF;
     message[3] =  counter & 0xFF;
-    // DEBUG_PRINTf("Counter = %lu \r\n", counter);
+    message[2] = (counter >> 8)  & 0xFF;
+    message[1] = (counter >> 16) & 0xFF;
+    message[0] = (counter >> 24) & 0xFF;
     digitalWrite(LED_BUILTIN, LOW);
     DEBUG_PRINTLN(millis());
     esp_now_send(master_mac, message, 4);
