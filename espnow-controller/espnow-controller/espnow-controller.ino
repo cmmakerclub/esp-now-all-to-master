@@ -70,6 +70,15 @@ void setup() {
     printMacAddress(macaddr);
     digitalWrite(LED_BUILTIN, ledState);
     ledState = !ledState;
+
+
+    int add_peer_status = esp_now_add_peer(macaddr, ESP_NOW_ROLE_SLAVE, WIFI_DEFAULT_CHANNEL, NULL, 0);
+    uint8_t* first_peer = esp_now_fetch_peer(true);
+    Serial.printf("ADD PEER STATUS: [%d] \r\n", add_peer_status);
+
+    uint8_t message[] = {1,1,1,1};
+    esp_now_send(first_peer, message, 4);
+
   });
 
   esp_now_register_send_cb([](uint8_t* macaddr, uint8_t status) {
@@ -88,10 +97,10 @@ void setup() {
     Serial.printf("[SUCCESS] = %lu/%lu \r\n", ok, ok+fail);
   });
 
-  // int add_peer_status = esp_now_add_peer(slave_mac, ESP_NOW_ROLE_SLAVE, WIFI_DEFAULT_CHANNEL, NULL, 0);
   // DEBUG_PRINTF("ADD PEER: %d\r\n", add_peer_status);
 }
 
 void loop() {
   yield();
+
 }
