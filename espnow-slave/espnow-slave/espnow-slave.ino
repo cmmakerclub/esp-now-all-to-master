@@ -6,11 +6,9 @@ extern "C" {
 }
 
 #include <Ticker.h>
-Ticker ticker;
 
 #define WIFI_DEFAULT_CHANNEL 1
 #define DEBUG_SERIAL 1
-bool must_send_data = 0;
 
 #if DEBUG_SERIAL
     #define DEBUG_PRINTER Serial
@@ -24,7 +22,7 @@ bool must_send_data = 0;
 #endif
 
 // USE STATION_IF
-uint8_t master_mac[] = {0x18,0xFE,0x34,0xEE,0xCD,0x21};
+uint8_t master_mac[] = {0x18,0xFE,0x34,0xEE,0xA0,0xF9};
 uint32_t counter = 0;
 uint32_t send_ok_counter = 0;
 uint32_t send_fail_counter = 0;
@@ -94,14 +92,9 @@ void setup() {
       DEBUG_PRINTF("... send_cb FAILED. [%lu/%lu]\r\n", send_ok_counter, send_ok_counter + send_fail_counter);
     }
   });
-
-  ticker.attach_ms(500, [&]() {
-    must_send_data = 1;
-  });
 }
 
 uint8_t message[] = {0};
-esp_now_send(master_mac, message, 4);
 
 void loop() {
   if (digitalRead(13) == LOW) {
@@ -112,9 +105,6 @@ void loop() {
     digitalWrite(LED_BUILTIN, LOW);
     DEBUG_PRINTLN(millis());
     esp_now_send(master_mac, message, 4);
+    delay(200);
   }
-  // if (must_send_data) {
-  //   must_send_data = 0;
-  //   // DEBUG_PRINTf("[%lu] sending...\r\n", millis());
-  // }
 }
