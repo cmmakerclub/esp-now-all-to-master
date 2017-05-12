@@ -22,7 +22,7 @@ extern "C" {
 bool ledState = LOW;
 Ticker ticker;
 bool tickerFlag = 0;
-uint8_t slave_mac[] = {0x1A,0xFE,0x34,0xEE,0x6E,0x79};
+uint8_t slave_mac[6];
 
 // SOFTAP_IF
 void printMacAddress(uint8_t* macaddr) {
@@ -35,13 +35,15 @@ void printMacAddress(uint8_t* macaddr) {
   DEBUG_PRINTLN("};");
 }
 
+bool send_done = false;
+
 void setup() {
   WiFi.disconnect();
   pinMode(LED_BUILTIN, OUTPUT);
   #if DEBUG_SERIAL
     Serial.begin(115200);
   #endif
-  DEBUG_PRINTLN("Initializing...");
+  DEBUG_PRINTLN("Initializing... Controller..");
   WiFi.mode(WIFI_STA);
   uint8_t macaddr[6];
   wifi_get_macaddr(STATION_IF, macaddr);
@@ -60,34 +62,61 @@ void setup() {
     return;
   }
 
-  ticker.attach_ms(1500, [&]() {
-    tickerFlag = 1;
-  });
+  // ticker.attach_ms(1500, [&]() {
+  //   tickerFlag = 1;
+  // });
 
   esp_now_set_self_role(ESP_NOW_ROLE_CONTROLLER);
   esp_now_register_recv_cb([](uint8_t *macaddr, uint8_t *data, uint8_t len) {
-    uint32_t bigNum;
-    bigNum = (bigNum << 8) | data[0];
-    bigNum = (bigNum << 8) | data[1];
-    bigNum = (bigNum << 8) | data[2];
-    bigNum = (bigNum << 8) | data[3];
+    Serial.println("RECEIVE... ");
 
-    DEBUG_PRINT("value: ");
-    DEBUG_PRINT(bigNum);
-    DEBUG_PRINT(" recv_cb from: ");
+    for (size_t i = 0; i < len; i++) {
+      Serial.println(data[i], HEX);
+    }
+
+    DEBUG_PRINT("COUNTER: ");
+    DEBUG_PRINTLN(data[0], DEC);
+    if (data[0] == 0xff && data[1] == 0xfa) {
+      if (data[2] == 0x10) {
+        Serial.println("VALID MSG");
+        tickerFlag = 1;
+        memcpy(slave_mac, macaddr, 6);
+      }
+      else {
+        Serial.println("VALID MSG");
+      }
+    }
+    // uint32_t bigNum;
+    // bigNum = (bigNum << 8) | data[0];
+    // bigNum = (bigNum << 8) | data[1];
+    // bigNum = (bigNum << 8) | data[2];
+    // bigNum = (bigNum << 8) | data[3];
+    //
+    // DEBUG_PRINT("value: ");
+    // DEBUG_PRINT(bigNum);
+    // DEBUG_PRINT(" recv_cb from: ");
     printMacAddress(macaddr);
     digitalWrite(LED_BUILTIN, ledState);
     ledState = !ledState;
   });
 
   esp_now_register_send_cb([](uint8_t* macaddr, uint8_t status) {
-    DEBUG_PRINT("send_cb to ");
+    // DEBUG_PRINT("send_cb to ");
     printMacAddress(macaddr);
+    static uint32_t ok = 0;
+    static uint32_t fail = 0;
     if (status == 0) {
-      DEBUG_PRINT("ESPNOW: SEND_OK");
+      // DEBUG_PRINTLN("ESPNOW: SEND_OK");
+      ok++;
     }
     else {
-      DEBUG_PRINT("ESPNOW: SEND_FAILED");
+      // DEBUG_PRINTLN("ESPNOW: SEND_FAILED");
+      fail++;
+    }
+    // Serial.printf("[SUCCESS] = %lu/%lu \r\n", ok, ok+fail);
+    if (send_done) {
+      ok =0;
+      fail = 0;
     }
   });
 
@@ -99,11 +128,24 @@ void loop() {
   yield();
   if (tickerFlag==1) {
     tickerFlag = 0;
-    int peer_exists = esp_now_is_peer_exist(slave_mac);
-    DEBUG_PRINTF("PEER EXISTS?: %d\r\n", peer_exists);
-    // uint8_t *peers =  esp_now_fetch_peer(true);
-    // DEBUG_PRINTF("1ST PEER =  %d\r\n", peers);
-    // printMacAddress(peers);
+    uint8_t message[4];
+    send_done = false;
+    for (size_t i = 1; i <= 100 ; i++) {
+      message[0] = 0xff;
+      message[1] = 0xfa;
+      message[2] = i;
+      message[3] = i;
+      esp_now_send(slave_mac, message, 4);
+      delay(10);
+    }
+    delay(50);
+    message[0] = 0xff;
+    message[1] = 0xfa;
+    message[2] = 0x00;
+    message[3] = 0x00;
+    send_done = true;
+    esp_now_send(slave_mac, message, 4);
+    delay(50);
   }
   // delay(100);
 }

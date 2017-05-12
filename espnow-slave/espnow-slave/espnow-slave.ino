@@ -101,10 +101,10 @@ void setup() {
 }
 
 uint8_t message[] = {0};
+esp_now_send(master_mac, message, 4);
+
 void loop() {
-  if (must_send_data) {
-    must_send_data = 0;
-    // DEBUG_PRINTf("[%lu] sending...\r\n", millis());
+  if (digitalRead(13) == LOW) {
     message[3] =  counter & 0xFF;
     message[2] = (counter >> 8)  & 0xFF;
     message[1] = (counter >> 16) & 0xFF;
@@ -113,4 +113,8 @@ void loop() {
     DEBUG_PRINTLN(millis());
     esp_now_send(master_mac, message, 4);
   }
+  // if (must_send_data) {
+  //   must_send_data = 0;
+  //   // DEBUG_PRINTf("[%lu] sending...\r\n", millis());
+  // }
 }
